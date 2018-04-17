@@ -1,7 +1,7 @@
 /**********************************************************************
 
 Outputs.cpp
-COPYRIGHT (c) 2013-2016 Gregg E. Berman
+COPYRIGHT (c) 2013-2016 Gregg E. Berman, edited by Lamplighter Scott 2018
 
 Part of DCC++ BASE STATION for the Arduino
 
