@@ -82,17 +82,13 @@ the state of any outputs being monitored or controlled by a separate interface o
 
 void Output::activate(int s){
   data.oStatus=(s>0);                                               // if s>0, set status to active, else inactive
-  int pinToActivate, pinValue;
-  pinValue = data.oStatus ^ bitRead(data.iFlag,0);
-  
-  // digitalWrite(data.pin,data.oStatus ^ bitRead(data.iFlag,0));      // set state of output pin to HIGH or LOW depending on whether bit zero of iFlag is set to 0 (ACTIVE=HIGH) or 1 (ACTIVE=LOW)
-  
-  if (pinValue){
-    pinToActivate = data.pin;
-  } else {
+  int pinValue;                                                     // set state of output pin to HIGH or LOW depending on whether bit zero of iFlag is set to 0 (ACTIVE=HIGH) or 1 (ACTIVE=LOW)
+  pinValue = data.oStatus ^ bitRead(data.iFlag,0);      
+  int pinToActivate = data.pin;
+  if (pinValue > 0){
     pinToActivate = data.pin + 1;
   }
-
+  
   digitalWrite(pinToActivate,HIGH);
   delay(200);
   digitalWrite(pinToActivate,LOW);
@@ -201,10 +197,17 @@ void Output::load(){
     EEPROM.get(EEStore::pointer(),data);  
     tt=create(data.id,data.pin,data.iFlag);
     tt->data.oStatus=bitRead(tt->data.iFlag,1)?bitRead(tt->data.iFlag,2):data.oStatus;      // restore status to EEPROM value is bit 1 of iFlag=0, otherwise set to value of bit 2 of iFlag
-    digitalWrite(tt->data.pin,tt->data.oStatus ^ bitRead(tt->data.iFlag,0));
-    delay(200); // Added by SE
-    digitalWrite(tt->data.pin,LOW);  // Added by SE
-    pinMode(tt->data.pin,OUTPUT);
+    int pinOutEven = tt->data.pin;
+    int pinOutOdd = pinOutEven+1;
+    pinMode(pinOutEven,OUTPUT);
+    pinMode(pinOutOdd,OUTPUT);
+    int pinOut = pinOutEven;
+    if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
+      pinOut = pinOutOdd;
+    }
+    digitalWrite(pinOut,HIGH);
+      delay(200);
+    digitalWrite(pinOut,LOW);
     tt->num=EEStore::pointer();
     EEStore::advance(sizeof(tt->data));
   }  
@@ -256,10 +259,17 @@ Output *Output::create(int id, int pin, int iFlag, int v){
   
   if(v==1){
     tt->data.oStatus=bitRead(tt->data.iFlag,1)?bitRead(tt->data.iFlag,2):0;      // sets status to 0 (INACTIVE) is bit 1 of iFlag=0, otherwise set to value of bit 2 of iFlag  
-    digitalWrite(tt->data.pin,tt->data.oStatus ^ bitRead(tt->data.iFlag,0));
-    delay(200); // Added by SE
-    digitalWrite(tt->data.pin,LOW);  // Added by SE
-    pinMode(tt->data.pin,OUTPUT);
+    int pinOutEven = tt->data.pin;
+    int pinOutOdd = pinOutEven+1;
+    pinMode(pinOutEven,OUTPUT);
+    pinMode(pinOutOdd,OUTPUT);
+    int pinOut = pinOutEven;
+    if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
+      pinOut = pinOutOdd;
+    }
+    digitalWrite(pinOut,HIGH);
+      delay(200);
+    digitalWrite(pinOut,LOW);
     INTERFACE.print("<O>");
   }
   
@@ -270,4 +280,5 @@ Output *Output::create(int id, int pin, int iFlag, int v){
 ///////////////////////////////////////////////////////////////////////////////
 
 Output *Output::firstOutput=NULL;
+
 
