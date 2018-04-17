@@ -1,13 +1,16 @@
 What’s DCC++
 ------------
 
-DCC++ is an open-source hardware and software system for the operation of DCC-equipped model railroads.
+DCC++ is an open-source hardware and software system for the operation of DCC-equipped model railroads.  The files in this repository are a branch of the original DCC++ Base Station, adapted for use with Marklin Z trains.
 
-The system consists of two parts, the DCC++ Base Station and the DCC++ Controller.
+This branch uses incoming Output commands to momentarily signal the output pins of the Mega2560.
+
+The system consists of: the DCC++ Base Station (Wemos Mega2560 Wifi, Motor Shield, and Toshiba ULN2803 Darlington Relays) and Marklin Z train set.
+
+Control is via JRMI, JMRI+WiThrottle/EngineDriver or WiThrottle/EngineDriver-only.  The latter requires that the Wemos WiFi (ESP8266) is loaded with the WiThrottleOutputs sketch.  In lieu of JMRI, the WiThottleOutputs sketch needs to be modified first to include the accessories connected directly to the pins of the Mega.  This information includes: system ID, pin number, user name, type letter, iFlag and status.  See the tData struct array at the top of the code.  Additional accessories can be added to the list.  Make sure to update the totalOutputs constant following the struct with the total number of rows in the array less the last 0 row in the array.
 
 The DCC++ Base Station consists of an Arduino micro controller fitted with an Arduino Motor Shield that can be connected directly to the tracks of a model railroad.
 
-The DCC++ Controller provides operators with a customizable GUI to control their model railroad.  It is written in Java using the Processing graphics library and IDE and communicates with the DCC++ Base Station via a standard serial connection over a USB cable or wireless over BlueTooth.
 
 What’s in this Repository
 -------------------------
