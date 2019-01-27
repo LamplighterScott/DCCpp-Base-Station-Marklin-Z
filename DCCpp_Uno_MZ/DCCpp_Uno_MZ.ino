@@ -6,7 +6,11 @@ DCC++ BASE STATION adpapted for Marklin Z
 * Engine functions intercepted to play sounds via DF Player Mini
 
 Hardware:
-Wenos Mega Wifi, Motor Shield, ULN2803 Darlington Relays, DF Player Mini, 12volt battery supply, Marklin Z with DZ126T decoders
+Lolin (Wemos) Mega Wifi, Deek-Robot Motor Shield, ULN2803 Darlington Relays, DF Player Mini DFR0299, 12/9/5v battery supply
+(Power Bank, model YB120011000-USB: 12/9/5v 11,000mAh),
+Marklin Z engines with BR-150: Velmo LDS26306, BR111: Velmo LDS2233331, SBB 460: DZ123MKO and DZ126T decoders, 7 switches,
+4 decouplers, and one semaphore.  Switches, decouplers and semaphore energized by 12v DC, track supply 9v,
+DF Mini Player supply 5v.
 
 Based on:
 DCC++ BASE STATION
