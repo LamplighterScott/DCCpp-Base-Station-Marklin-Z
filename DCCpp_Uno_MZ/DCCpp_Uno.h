@@ -49,7 +49,7 @@ Part of DCC++ BASE STATION for the Arduino
 #else
 
   #error CANNOT COMPILE - DCC++ ONLY WORKS WITH AN ARDUINO UNO OR AN ARDUINO MEGA 1280/2560
-
+  
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -89,13 +89,14 @@ Part of DCC++ BASE STATION for the Arduino
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////
-// SELECT COMMUNICATION INTERACE
+// SELECT COMMUNICATION INTERFACE
 /////////////////////////////////////////////////////////////////////////////////////
 
 #if COMM_INTERFACE == 0
 
   #define COMM_TYPE 0
-  #define INTERFACE Serial
+  // #define INTERFACE Serial
+  #define INTERFACE Serial3
 
 #elif (COMM_INTERFACE==1) || (COMM_INTERFACE==2) || (COMM_INTERFACE==3)
 
@@ -130,19 +131,5 @@ Part of DCC++ BASE STATION for the Arduino
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-/*
-/////////////////////////////////////////////////////////////////////////////////////
-// MP3 Player Constants
-
-# define Start_Byte 0x7E
-# define Version_Byte 0xFF
-# define Command_Length 0x06
-# define End_Byte 0xEF
-# define Acknowledge 0x00 //Returns info with command 0x41 [0x01: info, 0x00: no info]
-
-/////////////////////////////////////////////////////////////////////////////////////
-*/
 
 #endif
-
-

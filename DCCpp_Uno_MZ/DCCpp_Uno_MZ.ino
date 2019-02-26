@@ -1,3 +1,4 @@
+
 /**********************************************************************
 
 DCC++ BASE STATION adpapted for Marklin Z
@@ -6,11 +7,26 @@ DCC++ BASE STATION adpapted for Marklin Z
 * Engine functions intercepted to play sounds via DF Player Mini
 
 Hardware:
-Lolin (Wemos) Mega Wifi, Deek-Robot Motor Shield, ULN2803 Darlington Relays, DF Player Mini DFR0299, 12/9/5v battery supply
-(Power Bank, model YB120011000-USB: 12/9/5v 11,000mAh),
-Marklin Z engines with BR-150: Velmo LDS26306, BR111: Velmo LDS2233331, SBB 460: DZ123MKO and DZ126T decoders, 7 switches,
-4 decouplers, and one semaphore.  Switches, decouplers and semaphore energized by 12v DC, track supply 9v,
-DF Mini Player supply 5v.
+  Wemos MEGA R3 Wifi, or Deek-Robot MEGA & ESP-01 (ESP8266) - Serial3 - 12v input
+  DF Player Mini (MPE) - Serial1 - 4.2v input from 5v->4.2v voltage controller
+  Deek-Robot Motor Shield - 9v input
+  Toshiba ULN2803 Darlington Relays (x3) - 12v temporary (200ms) activation of track switch solenoids 
+  Texas Instruments 74HC595 8 bit Shift Registers (x4) - 5v continuous energizing of track switch LED's
+  TalentCell Rechargeable 72W 132 WH 12/9/5v battery supply 
+  
+  Marklin Z with decoders: DigiTrax DZ126T, Velmo LDS223331, Velmo LDS26306
+  Track Switch LED's: Green/Red 2x3x4 Water Clear Diffused Rectangular LED Diodes, Common Anode, 20mA, Red: 2.0-2.2v, Green 3.0-3.2v
+
+Code modifications:
+  The original DCC++ Base Station set the control communication automatically through Serial or Ethernet.  The Marklin adaptation
+  uses Serial3 instead of Serial0 (aka Serial)
+  for the communication between the MEGA and ESP8266 because the Wemos MEGA R3 has a build-in switch for that.  This way monitoring of
+  the MEGA can still be done on Serial0.  See DCCpp_Uno.cpp/SELECT COMMUNICATION INTERFACE for code change.
+
+  Communication initiation code for the DF Player Mini on Serial1 can be found under SerialCommand.ccp/MP3 PLAYER SET-UP.
+
+  Intercept of the engine functions for sound are execute in RegisterList::setFunction under PacketRegister.cpp.
+
 
 Based on:
 DCC++ BASE STATION
@@ -209,6 +225,7 @@ volatile RegisterList progRegs(2);                     // create a shorter list 
 CurrentMonitor mainMonitor(CURRENT_MONITOR_PIN_MAIN,"<p2>");  // create monitor for current on Main Track
 CurrentMonitor progMonitor(CURRENT_MONITOR_PIN_PROG,"<p3>");  // create monitor for current on Program Track
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // MAIN ARDUINO LOOP
 ///////////////////////////////////////////////////////////////////////////////
@@ -257,7 +274,7 @@ void setup(){
   Serial.print(__DATE__);
   Serial.print(" ");
   Serial.print(__TIME__);
-  Serial.print(">");
+  Serial.println(">");
 
   #if COMM_TYPE == 1
     #ifdef IP_ADDRESS
@@ -266,19 +283,26 @@ void setup(){
       Ethernet.begin(mac);                      // Start networking using DHCP to get an IP Address
     #endif
     INTERFACE.begin();
+  #elif INTERFACE == Serial3
+    INTERFACE.begin(115200);
+    INTERFACE.flush();
   #endif
              
   SerialCommand::init(&mainRegs, &progRegs, &mainMonitor);   // create structure to read and parse commands from serial line
 
-  Serial.print("<N");
+  Serial.print("<N Comm Type ");
   Serial.print(COMM_TYPE);
   Serial.print(": ");
 
   #if COMM_TYPE == 0
-    Serial.print("SERIAL>");
+    #if INTERFACE == Serial3
+      Serial.println("SERIAL3>");
+    #else
+      Serial.println("SERIAL>");
+     #endif
   #elif COMM_TYPE == 1
     Serial.print(Ethernet.localIP());
-    Serial.print(">");
+    Serial.println(">");
   #endif
   
   // CONFIGURE TIMER_1 TO OUTPUT 50% DUTY CYCLE DCC SIGNALS ON OC1B INTERRUPT PINS
@@ -401,45 +425,10 @@ void setup(){
   
 #endif
 
-/*
-/////////////////////////////////////////////////////////////////////////////
-// MP3 PLAYER SET-UP
-/////////////////////////////////////////////////////////////////////////////
-
-Serial1.begin (9600);
-
-execute_CMD(0x3F, 0, 0); // Send request for initialization parameters
-
- while (Serial1.available()<10) // Wait until initialization parameters are received (10 bytes)
- delay(30); // Pretty long delays between succesive commands needed (not always the same)
-
- // Initialize sound to very low volume. Adapt according used speaker and wanted volume
- execute_CMD(0x06, 0, 5); // Set the volume (0x00~0x30)
-*/
 
 } // setup
 
-/*
-//////////////////////////////////////////////////////////////////////////////
-// DEFINE THE SERIAL1 EXECUTE COMMAND FOR MP3 PLAYER
-//////////////////////////////////////////////////////////////////////////////
 
-void execute_CMD(byte CMD, byte Par1, byte Par2) // Excecute the command and parameters
-{
- // Calculate the checksum (2 bytes)
- int16_t checksum = -(Version_Byte + Command_Length + CMD + Acknowledge + Par1 + Par2);
-
- // Build the command line
- byte Command_line[10] = { Start_Byte, Version_Byte, Command_Length, CMD, Acknowledge, Par1, Par2, checksum >> 8, checksum & 0xFF, End_Byte};
-
- //Send the command line to the module
- for (byte k=0; k<10; k++)
- {
-  Serial1.write( Command_line[k]);
- }
-} // MPE_Player Execute_CMD
-
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // DEFINE THE INTERRUPT LOGIC THAT GENERATES THE DCC SIGNAL
@@ -608,7 +597,3 @@ void showConfiguration(){
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-
-
-

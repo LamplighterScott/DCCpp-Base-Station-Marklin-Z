@@ -78,20 +78,35 @@ the state of any outputs being monitored or controlled by a separate interface o
 #include <EEPROM.h>
 #include "Comm.h"
 
+  // CHANGE SWITCH LIGHT
+  // Arduino pins: 11,8,12
+  // Mega Analog pins: 67,68,69
+
+  // Pin connected to ST_CP of 74HC595
+  const int latchPin = 68; // 8
+  
+  // Pin connected to SH_CP of 74HC595
+  const int clockPin = 69; // 12
+  
+  // Pin connected to DS of 74HC595
+  const int dataPin = 67; // 11 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void Output::activate(int s){
   data.oStatus=(s>0);                                               // if s>0, set status to active, else inactive
-  int pinValue;                                                     // set state of output pin to HIGH or LOW depending on whether bit zero of iFlag is set to 0 (ACTIVE=HIGH) or 1 (ACTIVE=LOW)
-  pinValue = data.oStatus ^ bitRead(data.iFlag,0);      
-  int pinToActivate = data.pin;
-  if (pinValue > 0){
-    pinToActivate = data.pin + 1;
-  }
+  //int pinValue;                                                     // set state of output pin to HIGH or LOW depending on whether bit zero of iFlag is set to 0 (ACTIVE=HIGH) or 1 (ACTIVE=LOW)
+  //pinValue = data.oStatus ^ bitRead(data.iFlag,0);      
+  //int pinToActivate = data.pin;
+  //if (pinValue > 0){
+    //pinToActivate = data.pin + 1;
+  //}
   
-  digitalWrite(pinToActivate,HIGH);
-  delay(200);
-  digitalWrite(pinToActivate,LOW);
+  //digitalWrite(pinToActivate,HIGH);
+  //delay(200);
+  //digitalWrite(pinToActivate,LOW);
+  Output::signal(data.oStatus, data.id, data.pin, data.iFlag);
+  
   if(num>0)
     EEPROM.put(num,data.oStatus);
   INTERFACE.print("<Y");
@@ -109,6 +124,7 @@ Output* Output::get(int n){
   for(tt=firstOutput;tt!=NULL && tt->data.id!=n;tt=tt->nextOutput);
   return(tt); 
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void Output::remove(int n){
@@ -160,9 +176,10 @@ void Output::show(int n){
 ///////////////////////////////////////////////////////////////////////////////
 
 void Output::parse(char *c){
+  // Serial.print("Command string: ");
+  // Serial.println(c);
   int n,s,m;
   Output *t;
-  
   switch(sscanf(c,"%d %d %d",&n,&s,&m)){
     
     case 2:                     // argument is string with id number of output followed by zero (LOW) or one (HIGH)
@@ -182,6 +199,7 @@ void Output::parse(char *c){
     break;
     
     case -1:                    // no arguments
+      Serial.print("Z command received");
       show(1);                  // verbose show
     break;
   }
@@ -193,24 +211,96 @@ void Output::load(){
   struct OutputData data;
   Output *tt;
 
+  Serial.print("<Loading pins as output: ");
+
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+
   for(int i=0;i<EEStore::eeStore->data.nOutputs;i++){
     EEPROM.get(EEStore::pointer(),data);  
     tt=create(data.id,data.pin,data.iFlag);
+    
     tt->data.oStatus=bitRead(tt->data.iFlag,1)?bitRead(tt->data.iFlag,2):data.oStatus;      // restore status to EEPROM value is bit 1 of iFlag=0, otherwise set to value of bit 2 of iFlag
     int pinOutEven = tt->data.pin;
     int pinOutOdd = pinOutEven+1;
+    
+    Serial.print(pinOutEven);
+    Serial.print(" ");
+    
     pinMode(pinOutEven,OUTPUT);
     pinMode(pinOutOdd,OUTPUT);
-    int pinOut = pinOutEven;
-    if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
-      pinOut = pinOutOdd;
+    //int pinOut = pinOutEven;
+    //if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
+      //pinOut = pinOutOdd;
+    //}
+    // digitalWrite(pinOut,HIGH);
+      // delay(200);
+    // digitalWrite(pinOut,LOW);
+
+    Output::signal(data.oStatus, data.id, data.pin, data.iFlag);
+
+    tt->num=EEStore::pointer();
+    EEStore::advance(sizeof(tt->data));
+  }
+
+   Serial.println(">");
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Output::signal(byte oStatus, int id, byte pinOut, byte iFlag) {
+
+  // ENERGIZE SWITCH AND DECOUPLER SOLENOIDS, 12v DC
+  // MEGA pinouts to Toshiba ULN2803APG
+  //int pinOut = pin;
+    if (oStatus ^ bitRead(iFlag,0) > 0) {
+      pinOut += 1;
     }
     digitalWrite(pinOut,HIGH);
       delay(200);
     digitalWrite(pinOut,LOW);
-    tt->num=EEStore::pointer();
-    EEStore::advance(sizeof(tt->data));
-  }  
+
+
+ //  ILLUMINATE LED'S
+ //  MEGA shiftOut() to TI 74HC595N Shift Register IC's, 5v DC 
+  const byte byteOfOne = 1;
+  static byte switchByteA;
+  static byte switchByteB;
+  
+  // switches 1-8, decoupler 17-20, 21-24 building lights, 25 semiphore
+  // id 1 to x ==> pinBit 0 to x-1
+  int pinBit = id - 1;
+  
+  if (pinBit < 24) {
+
+    // turn off the output so the pins don't light up while shifting bits:
+    digitalWrite(latchPin, LOW);
+    
+    if (pinBit < 8) {
+      // NOR to invert only selected pin bit
+      switchByteA ^= (byteOfOne << (pinBit));
+    } else {
+      pinBit = id - 17;
+      // Serial.print("SwitchByteB pinBit: ");
+      // Serial.println(pinBit);
+      switchByteB ^= (byteOfOne << (pinBit));
+    }
+    // Set green (4th IC)
+    shiftOut(dataPin, clockPin, LSBFIRST, switchByteB);
+    // Not to invert all for red (3rd IC)
+    shiftOut(dataPin, clockPin, LSBFIRST, ~switchByteB);
+    // Set green (2nd IC)
+    shiftOut(dataPin, clockPin, LSBFIRST, switchByteA);
+    // NOT to invert all for red (1st IC)
+    shiftOut(dataPin, clockPin, LSBFIRST, ~switchByteA);
+
+    // turn on the output to illuminate LEDs
+    digitalWrite(latchPin, HIGH);
+  }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -258,18 +348,22 @@ Output *Output::create(int id, int pin, int iFlag, int v){
   tt->data.oStatus=0;
   
   if(v==1){
+
     tt->data.oStatus=bitRead(tt->data.iFlag,1)?bitRead(tt->data.iFlag,2):0;      // sets status to 0 (INACTIVE) is bit 1 of iFlag=0, otherwise set to value of bit 2 of iFlag  
     int pinOutEven = tt->data.pin;
     int pinOutOdd = pinOutEven+1;
     pinMode(pinOutEven,OUTPUT);
     pinMode(pinOutOdd,OUTPUT);
-    int pinOut = pinOutEven;
-    if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
-      pinOut = pinOutOdd;
-    }
-    digitalWrite(pinOut,HIGH);
-      delay(200);
-    digitalWrite(pinOut,LOW);
+    //int pinOut = pinOutEven;
+    //if (tt->data.oStatus ^ bitRead(tt->data.iFlag,0) > 0) {
+      //pinOut = pinOutOdd;
+    //}
+    //digitalWrite(pinOut,HIGH);
+      //delay(200);
+    //digitalWrite(pinOut,LOW);
+
+    signal(0, id, pin, iFlag);
+    
     INTERFACE.print("<O>");
   }
   
@@ -280,5 +374,3 @@ Output *Output::create(int id, int pin, int iFlag, int v){
 ///////////////////////////////////////////////////////////////////////////////
 
 Output *Output::firstOutput=NULL;
-
-

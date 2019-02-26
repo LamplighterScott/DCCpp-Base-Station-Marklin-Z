@@ -29,11 +29,10 @@ struct Output{
   static Output* get(int);
   static void remove(int);
   static void load();
+  static void signal(byte, int, byte, byte);
   static void store();
   static Output *create(int, int, int, int=0);
   static void show(int=0);
 }; // Output
   
 #endif
-
-

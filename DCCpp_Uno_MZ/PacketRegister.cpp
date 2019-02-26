@@ -11,6 +11,7 @@ Part of DCC++ BASE STATION for the Arduino
 #include "PacketRegister.h"
 #include "Comm.h"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void Register::initPackets(){
@@ -136,6 +137,7 @@ void RegisterList::setThrottle(char *s) volatile{
     
 } // RegisterList::setThrottle()
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void RegisterList::setFunction(char *s) volatile{
@@ -154,19 +156,7 @@ void RegisterList::setFunction(char *s) volatile{
     b[nB++]=highByte(cab) | 0xC0;      // convert train number into a two-byte address
     
   b[nB++]=lowByte(cab);
-/*
-  if (fByte=1){
-    execute_CMD1(0x04, 0, 0);  // increase sound volume
-  } else if (fByte=2) {
-    execute_CMD1(0x05, 0, 0);  // decrease sound volume
-  } else if (fByte<19){
-    execute_CMD1(0x08, 2, 0);  // put play in single play mode
-    execute_CMD1(0x03, byte (fByte - 2), 0);  // play mp3 file
-  } else if (fByte<26) {
-    execute_CMD1(0x08, 0, 0);  // put player in repeat play mode
-    execute_CMD1(0x03, byte (fByte - 2), 0);  // play mp3 file 
-  } else {                              // process functions per dcc++ default
-*/
+
   if(nParams==2){                      // this is a request for functions FL,F1-F12  
     b[nB++]=(fByte | 0x80) & 0xBF;     // for safety this guarantees that first nibble of function byte will always be of binary form 10XX which should always be the case for FL,F1-F12  
   } else {                             // this is a request for functions F13-F28
@@ -175,31 +165,8 @@ void RegisterList::setFunction(char *s) volatile{
   }
     
   loadPacket(0,b,nB,4,1);
-
-  // }
     
-} // RegisterList::setFunction()
-
-/*
-//////////////////////////////////////////////////////////////////////////////
-// DEFINE THE SERIAL1 EXECUTE COMMAND FOR MP3 PLAYER
-//////////////////////////////////////////////////////////////////////////////
-
-void RegisterList::execute_CMD1(byte CMD, byte Par1, byte Par2) volatile{ // Excecute the command and parameters
-
- // Calculate the checksum (2 bytes)
- int16_t checksum = -(Version_Byte + Command_Length + CMD + Acknowledge + Par1 + Par2);
-
- // Build the command line
- byte Command_line[10] = { Start_Byte, Version_Byte, Command_Length, CMD, Acknowledge, Par1, Par2, checksum >> 8, checksum & 0xFF, End_Byte};
-
- //Send the command line to the module
- for (byte k=0; k<10; k++)
- {
-  Serial1.write( Command_line[k]);
- }
-} // MPE_Player Execute_CMD1
-*/
+}  // RegisterList::setFunction()
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -51,7 +51,6 @@ struct RegisterList{
   void loadPacket(int, byte *, int, int, int=0) volatile;
   void setThrottle(char *) volatile;
   void setFunction(char *) volatile;
-  void execute_CMD1(byte, byte, byte) volatile;  // Used my MP3 Player  
   void setAccessory(char *) volatile;
   void writeTextPacket(char *) volatile;
   void readCV(char *) volatile;
@@ -60,6 +59,7 @@ struct RegisterList{
   void writeCVByteMain(char *) volatile;
   void writeCVBitMain(char *s) volatile;  
   void printPacket(int, byte *, int, int) volatile;
+
 };
 
 #endif

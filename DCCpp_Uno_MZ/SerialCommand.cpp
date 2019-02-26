@@ -12,6 +12,10 @@ Part of DCC++ BASE STATION for the Arduino
 // ARE REQUIRED.  SPACES ANYWHERE ELSE ARE IGNORED.  A SPACE BETWEEN THE SINGLE-CHARACTER
 // COMMAND AND THE FIRST PARAMETER IS ALSO NOT REQUIRED.
 
+// Serial0 is used for communications between Arduino:PC or Arduino:ESP8266 or ESP8266:PC depending on dipswitches
+// Serial1 is used to monitor ESP8266 for troubleshooting
+// Serial3 is used for communications between Arduino:DFPlayerMini
+
 // See SerialCommand::parse() below for defined text commands.
 
 #include "SerialCommand.h"
@@ -21,6 +25,7 @@ Part of DCC++ BASE STATION for the Arduino
 #include "Outputs.h"
 #include "EEStore.h"
 #include "Comm.h"
+#include "DFRobotDFPlayerMini.h"
 
 extern int __heap_start, *__brkval;
 
@@ -30,6 +35,8 @@ char SerialCommand::commandString[MAX_COMMAND_LENGTH+1];
 volatile RegisterList *SerialCommand::mRegs;
 volatile RegisterList *SerialCommand::pRegs;
 CurrentMonitor *SerialCommand::mMonitor;
+DFRobotDFPlayerMini miniPlayer;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -38,7 +45,68 @@ void SerialCommand::init(volatile RegisterList *_mRegs, volatile RegisterList *_
   pRegs=_pRegs;
   mMonitor=_mMonitor;
   sprintf(commandString,"");
+
+  /////////////////////////////////////////////////////////////////////////////
+  // MP3 PLAYER SET-UP
+  /////////////////////////////////////////////////////////////////////////////
+
+  Serial1.begin (9600);
+  Serial1.flush();
+  
+  if (miniPlayer.begin(Serial1)) {
+    miniPlayer.volume(10);
+    miniPlayer.play(1);
+
+  if (Serial){
+    Serial.print("");
+    Serial.println("<DFPlayer Mini Initiated>");
+  }
+        
+  }
+
 } // SerialCommand:SerialCommand
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SerialCommand::playSound(char *soundData){
+
+  int functionAction;
+  int functionNumber;
+  int nParams;
+
+  nParams=sscanf(soundData, "%*s %d %d",&functionAction, &functionNumber);
+  
+  Serial.println("PlaySound: J"+functionAction+functionNumber);
+  
+  functionNumber =- 7;
+
+  String printString;
+
+  if (functionNumber<0){
+    printString = "Sound UP";
+    miniPlayer.volumeUp();
+
+  } else if (functionNumber<1){
+    printString = "Sound DN";
+    miniPlayer.volumeDown();
+
+  } else if (functionAction<1){
+    printString = "Stop playing";
+    miniPlayer.stop();
+ 
+  } else if (functionNumber<17){
+    printString = "Play once item # "+functionNumber;
+    miniPlayer.play(functionNumber);
+ 
+  } else {
+    printString = "Loop item # "+functionNumber;
+    miniPlayer.loop(functionNumber);
+  }
+  if (Serial){
+    Serial.println(printString);
+  }
+  
+} // SerialCommand::playSound
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -78,10 +146,56 @@ void SerialCommand::process(){
 } // SerialCommand:process
    
 ///////////////////////////////////////////////////////////////////////////////
+/* Space - Carriage return
+ * 0 - Power off
+ * 1 - Power on
+ * a - Address
+ * b - verification
+ * c - Current read
+ * e - Clear EEPROM
+ * f - Functions
+ * s - Status
+ * w - Verification
+ * B - Callback
+ * D - Change clock speed
+ * E - EEPROM
+ * F - free SRAM
+ * H - Print iPHone data from ESP8266
+ * J - DFPlayer Mini 
+ * L - List of track registers
+ * M - Register
+ * P - Register
+ * Q - Sensor status
+ * R - Callback
+ * S - Sensor
+ * T - Turnout
+ * W - Callback
+ * Z - Output
+ */
 
 void SerialCommand::parse(char *com){
+
+    Serial.print("SerialCommand:");
+    Serial.println(*com);
   
   switch(com[0]){
+
+    //////////////////////////////////////////////////
+    case 'H':  //  Print iPhone data from ESP8266
+      Serial.print("iPhoneDataGeneral: ");
+      String commandLine = c
+      Serial.println(com+1);
+    break;
+    
+    //////////////////////////////////////////////////
+
+    case 'J':  // DF PLAYER MINI
+    if (Serial){
+      Serial.print("iPhoneDataDFPlayer:");
+      Serial.println(*com+1);
+    }
+      // playSound(com+1);
+    break;
 
 /***** SET ENGINE THROTTLES USING 128-STEP SPEED CONTROL ****/    
 
@@ -185,6 +299,7 @@ void SerialCommand::parse(char *com){
 /***** CREATE/EDIT/REMOVE/SHOW & OPERATE AN OUTPUT PIN  ****/    
 
     case 'Z':       // <Z ID ACTIVATE>
+    
 /*
  *   <Z ID ACTIVATE>:          sets output ID to either the "active" or "inactive" state
  *   
@@ -567,5 +682,3 @@ void SerialCommand::parse(char *com){
 }; // SerialCommand::parse
 
 ///////////////////////////////////////////////////////////////////////////////
-
-
