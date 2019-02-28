@@ -176,8 +176,7 @@ void Output::show(int n){
 ///////////////////////////////////////////////////////////////////////////////
 
 void Output::parse(char *c){
-  // Serial.print("Command string: ");
-  // Serial.println(c);
+  
   int n,s,m;
   Output *t;
   switch(sscanf(c,"%d %d %d",&n,&s,&m)){
@@ -199,7 +198,9 @@ void Output::parse(char *c){
     break;
     
     case -1:                    // no arguments
-      Serial.print("Z command received");
+      if (Serial) {
+        Serial.print("Z command received without parameters");
+      }
       show(1);                  // verbose show
     break;
   }
@@ -211,7 +212,9 @@ void Output::load(){
   struct OutputData data;
   Output *tt;
 
-  Serial.print("<Loading pins as output: ");
+  if (Serial){
+    Serial.print("<Loading pins as output: ");
+  }
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -224,10 +227,13 @@ void Output::load(){
     tt->data.oStatus=bitRead(tt->data.iFlag,1)?bitRead(tt->data.iFlag,2):data.oStatus;      // restore status to EEPROM value is bit 1 of iFlag=0, otherwise set to value of bit 2 of iFlag
     int pinOutEven = tt->data.pin;
     int pinOutOdd = pinOutEven+1;
-    
-    Serial.print(pinOutEven);
-    Serial.print(" ");
-    
+
+    if (Serial) {
+      if (i>0) Serial.print(", ");
+      Serial.print(pinOutEven);
+
+    }
+
     pinMode(pinOutEven,OUTPUT);
     pinMode(pinOutOdd,OUTPUT);
     //int pinOut = pinOutEven;
@@ -243,8 +249,9 @@ void Output::load(){
     tt->num=EEStore::pointer();
     EEStore::advance(sizeof(tt->data));
   }
-
-   Serial.println(">");
+  if (Serial) {
+    Serial.println(">");
+  }
 
 }
 

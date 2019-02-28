@@ -74,37 +74,35 @@ void SerialCommand::playSound(char *soundData){
   int functionNumber;
   int nParams;
 
-  nParams=sscanf(soundData, "%*s %d %d",&functionAction, &functionNumber);
-  
-  Serial.println("PlaySound: J"+functionAction+functionNumber);
-  
-  functionNumber =- 7;
+  nParams=sscanf(soundData, "%i %i",&functionAction, &functionNumber);
 
-  String printString;
+  //String printBuffer;
+  
+  functionNumber -= 6;
 
   if (functionNumber<0){
-    printString = "Sound UP";
+    //printBuffer = "Sound UP";
     miniPlayer.volumeUp();
 
   } else if (functionNumber<1){
-    printString = "Sound DN";
+    //printBuffer = "Sound DN";
     miniPlayer.volumeDown();
 
   } else if (functionAction<1){
-    printString = "Stop playing";
+    //printBuffer = "Stop playing";
     miniPlayer.stop();
  
   } else if (functionNumber<17){
-    printString = "Play once item # "+functionNumber;
+    //printBuffer = "Play once item # "+String(functionNumber);
     miniPlayer.play(functionNumber);
  
   } else {
-    printString = "Loop item # "+functionNumber;
+    //printBuffer = "Loop item # "+String(functionNumber);
     miniPlayer.loop(functionNumber);
   }
-  if (Serial){
-    Serial.println(printString);
-  }
+  /*if (Serial){
+    Serial.println(printBuffer);
+  }*/
   
 } // SerialCommand::playSound
 
@@ -174,27 +172,23 @@ void SerialCommand::process(){
  */
 
 void SerialCommand::parse(char *com){
-
-    Serial.print("SerialCommand:");
-    Serial.println(*com);
   
   switch(com[0]){
 
     //////////////////////////////////////////////////
     case 'H':  //  Print iPhone data from ESP8266
-      Serial.print("iPhoneDataGeneral: ");
-      String commandLine = c
-      Serial.println(com+1);
+    if (Serial){
+      int nParams;
+      char phoneData[20];
+      nParams = sscanf(com+1, "%s", phoneData);
+      Serial.println(phoneData);
+    }
     break;
     
     //////////////////////////////////////////////////
 
     case 'J':  // DF PLAYER MINI
-    if (Serial){
-      Serial.print("iPhoneDataDFPlayer:");
-      Serial.println(*com+1);
-    }
-      // playSound(com+1);
+      playSound(com+1);
     break;
 
 /***** SET ENGINE THROTTLES USING 128-STEP SPEED CONTROL ****/    
