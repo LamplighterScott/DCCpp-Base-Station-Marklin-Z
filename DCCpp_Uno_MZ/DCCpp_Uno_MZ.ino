@@ -263,18 +263,19 @@ void setup(){
   digitalWrite(A5,HIGH);
   if(!digitalRead(A5))
     showConfiguration();
-
-  Serial.print("<iDCC++ BASE STATION FOR ARDUINO ");      // Print Status to Serial Line regardless of COMM_TYPE setting so use can open Serial Monitor and check configurtion 
-  Serial.print(ARDUINO_TYPE);
-  Serial.print(" / ");
-  Serial.print(MOTOR_SHIELD_NAME);
-  Serial.print(": V-");
-  Serial.print(VERSION);
-  Serial.print(" / ");
-  Serial.print(__DATE__);
-  Serial.print(" ");
-  Serial.print(__TIME__);
-  Serial.println(">");
+  if (Serial) {
+    Serial.print("<iDCC++ BASE STATION FOR ARDUINO ");      // Print Status to Serial Line regardless of COMM_TYPE setting so use can open Serial Monitor and check configurtion 
+    Serial.print(ARDUINO_TYPE);
+    Serial.print(" / ");
+    Serial.print(MOTOR_SHIELD_NAME);
+    Serial.print(": V-");
+    Serial.print(VERSION);
+    Serial.print(" / ");
+    Serial.print(__DATE__);
+    Serial.print(" ");
+    Serial.print(__TIME__);
+    Serial.println(">");
+  }
 
   #if COMM_TYPE == 1
     #ifdef IP_ADDRESS
@@ -290,9 +291,11 @@ void setup(){
              
   SerialCommand::init(&mainRegs, &progRegs, &mainMonitor);   // create structure to read and parse commands from serial line
 
-  Serial.print("<N Comm Type ");
-  Serial.print(COMM_TYPE);
-  Serial.print(": ");
+  if (Serial) {
+    Serial.print("<N Comm Type ");
+    Serial.print(COMM_TYPE);
+    Serial.print(": ");
+  }
 
   #if COMM_TYPE == 0
     #if INTERFACE == Serial3
