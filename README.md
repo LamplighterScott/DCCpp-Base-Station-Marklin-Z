@@ -9,6 +9,8 @@ The system consists of: the DCC++ Base Station (Wemos Mega2560 Wifi, Motor Shiel
 
 Control is via JRMI, JMRI+WiThrottle/EngineDriver or WiThrottle/EngineDriver-only.  The latter requires that the Wemos WiFi (ESP8266) is loaded with the WiThrottleOutputs sketch.  In lieu of JMRI, the WiThottleOutputs sketch needs to be modified first to include the accessories connected directly to the pins of the Mega.  This information includes: system ID, pin number, user name, type letter, iFlag and status.  See the tData struct array at the top of the code.  Additional accessories can be added to the list.  Make sure to update the totalOutputs constant following the struct with the total number of rows in the array less the last 0 row in the array.
 
+The locomotive roster and function labels are also set and stored in WiThrottleOutputs and then sent by wifi up to the iPhone WiThrottle app.
+
 The DCC++ Base Station consists of an Arduino micro controller fitted with an Arduino Motor Shield that can be connected directly to the tracks of a model railroad.
 
 
