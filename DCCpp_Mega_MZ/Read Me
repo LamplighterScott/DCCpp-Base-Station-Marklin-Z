@@ -4,8 +4,8 @@ for starting the upload.
 
 * A Motor Shield mounted on the Mega with a jumper between pins 2 and 13
 * A DF Player Mini connected to the Mega's Serial one Tx1/Rx1 pins
-* The DF Player removable flash card loaded with mp3 sound files.  Each MP3 file name should start with three digits.
-* The numbers should be in a continuous sequence: 001xxx.mp3, 002yyy.mp3 ... 024zzz.mp3.
+* The DF Player removable flash card loaded with mp3 sound files.  Each MP3 file name should start with four digits.
+* The numbers should be in a continuous sequence: 0001xxx.mp3, 0002yyy.mp3 ... 0024zzz.mp3.
 * xxx, yyy and zzz can be any numberic or alphabet letters or any length; no spaces; dash or underscore are okay.
 * An ESP-01 and Uart adapter connected to the Mega's Serial three Tx3/Rx3 pins
 * The sketch FussenThrottleSafari.ino and data files FussenCCS.ccs, FussenHTML.html and FussenJS.js upload to the ESP
